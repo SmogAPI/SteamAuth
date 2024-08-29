@@ -12,6 +12,7 @@
         <Authors>geel9,Jessecar96,NiceAesth</Authors>
         <Owners>NiceAesth</Owners>
         <Description>A C# library that provides vital Steam Mobile Authenticator functionality</Description>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
         <PackageProjectUrl>https://github.com/SmogAPI/SteamAuth</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/SmogAPI/SteamAuth</RepositoryUrl>
@@ -26,5 +27,8 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="System.Text.Json" Version="8.0.4" />
+    </ItemGroup>
+    <ItemGroup>
+        <None Include="..\README.md" Pack="true" PackagePath="\" />
     </ItemGroup>
 </Project>
