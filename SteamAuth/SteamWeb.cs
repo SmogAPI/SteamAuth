@@ -1,43 +1,35 @@
 ﻿using System;
 using System.Collections.Specialized;
+using System.Linq;
 using System.Net;
-using System.Text;
+using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace SteamAuth
+namespace SteamAuth;
+
+public static class SteamWeb
 {
-    public class SteamWeb
+    public static readonly string MobileAppUserAgent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
+
+    public static async Task<string> GetRequest(string url, CookieContainer cookies)
     {
-        public static string MobileAppUserAgent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
+        using var handler = new HttpClientHandler { CookieContainer = cookies };
+        using var client = new HttpClient(handler);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
+        var response = await client.GetStringAsync(url);
+        return response;
+    }
 
-        public static async Task<string> GetRequest(string url, CookieContainer cookies)
-        {
-            string response;
-            using (var wc = new CookieAwareWebClient())
-            {
-                wc.Encoding = Encoding.UTF8;
-                wc.CookieContainer = cookies;
-                wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MobileAppUserAgent;
-                response = await wc.DownloadStringTaskAsync(url);
-            }
-            return response;
-        }
+    public static async Task<string> PostRequest(string url, CookieContainer cookies, NameValueCollection body)
+    {
+        body ??= new NameValueCollection();
 
-        public static async Task<string> PostRequest(string url, CookieContainer cookies, NameValueCollection body)
-        {
-            if (body == null)
-                body = new NameValueCollection();
-
-            string response;
-            using (var wc = new CookieAwareWebClient())
-            {
-                wc.Encoding = Encoding.UTF8;
-                wc.CookieContainer = cookies;
-                wc.Headers[HttpRequestHeader.UserAgent] = SteamWeb.MobileAppUserAgent;
-                var result = await wc.UploadValuesTaskAsync(new Uri(url), "POST", body);
-                response = Encoding.UTF8.GetString(result);
-            }
-            return response;
-        }
+        using var handler = new HttpClientHandler { CookieContainer = cookies };
+        using var client = new HttpClient(handler);
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
+        var content = new FormUrlEncodedContent(body.Cast<string>().ToDictionary(k => k, k => body[k]));
+        var result = await client.PostAsync(new Uri(url), content);
+        var response = await result.Content.ReadAsStringAsync();
+        return response;
     }
 }
