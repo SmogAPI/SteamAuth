@@ -11,7 +11,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static System.String;
 
-namespace SteamAuth;
+namespace SteamAuthCore;
 
 public class SteamGuardAccount
 {

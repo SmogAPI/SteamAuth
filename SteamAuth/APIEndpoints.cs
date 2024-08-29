@@ -1,4 +1,4 @@
-﻿namespace SteamAuth;
+﻿namespace SteamAuthCore;
 
 public static class ApiEndpoints
 {

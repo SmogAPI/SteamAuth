@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text.Json;
 using System.Threading.Tasks;
-using SteamAuth;
+using SteamAuthCore;
 using SteamKit2;
 using SteamKit2.Authentication;
 using SteamKit2.Internal;
