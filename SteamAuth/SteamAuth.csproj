@@ -2,21 +2,21 @@
     <PropertyGroup>
         <ProjectGuid>{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}</ProjectGuid>
         <TargetFramework>net8.0</TargetFramework>
-        <AssemblyTitle>SteamAuthCore</AssemblyTitle>
-        <Product>SteamAuthCore</Product>
+        <AssemblyTitle>SmogAuthCore</AssemblyTitle>
+        <Product>SmogAuthCore</Product>
         <Copyright>Copyright © 2024</Copyright>
         <OutputPath>bin\$(Configuration)\</OutputPath>
         <LangVersion>latestmajor</LangVersion>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <PackageId>SteamAuthCore</PackageId>
+        <PackageId>SmogAuthCore</PackageId>
         <Authors>geel9,Jessecar96,NiceAesth</Authors>
         <Owners>NiceAesth</Owners>
         <Description>A C# library that provides vital Steam Mobile Authenticator functionality</Description>
         <PackageProjectUrl>https://github.com/SmogAPI/SteamAuth</PackageProjectUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <RepositoryUrl>https://github.com/SmogAPI/SteamAuth</RepositoryUrl>
-        <AssemblyName>SteamAuthCore</AssemblyName>
-        <RootNamespace>SteamAuthCore</RootNamespace>
+        <AssemblyName>SmogAuthCore</AssemblyName>
+        <RootNamespace>SmogAuthCore</RootNamespace>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DebugType>full</DebugType>

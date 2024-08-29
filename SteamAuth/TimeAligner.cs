@@ -4,7 +4,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace SteamAuthCore;
+namespace SmogAuthCore;
 
 /// <summary>
 ///     Class to help align system time with the Steam server time. Not super advanced; probably not taking some things

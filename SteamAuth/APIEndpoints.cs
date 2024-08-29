@@ -1,4 +1,4 @@
-﻿namespace SteamAuthCore;
+﻿namespace SmogAuthCore;
 
 public static class ApiEndpoints
 {

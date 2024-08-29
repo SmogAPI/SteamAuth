@@ -6,7 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
-namespace SteamAuthCore;
+namespace SmogAuthCore;
 
 /// <summary>
 ///     Handles the linking process for a new mobile authenticator.

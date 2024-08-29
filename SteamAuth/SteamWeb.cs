@@ -5,7 +5,7 @@ using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace SteamAuthCore;
+namespace SmogAuthCore;
 
 public static class SteamWeb
 {

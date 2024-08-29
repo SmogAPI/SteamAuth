@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
-namespace SteamAuthCore;
+namespace SmogAuthCore;
 
 public class Confirmation
 {
