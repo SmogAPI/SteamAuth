@@ -42,7 +42,7 @@ namespace SteamAuth
         public string Secret1 { get; set; }
 
         [JsonPropertyName("status")]
-        public int Status { get; set; }
+        public int? Status { get; set; }
 
         [JsonPropertyName("device_id")]
         public string DeviceId { get; set; }
