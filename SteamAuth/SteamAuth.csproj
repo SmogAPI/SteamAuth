@@ -1,19 +1,20 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <ProjectGuid>{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}</ProjectGuid>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <AssemblyTitle>SteamAuth</AssemblyTitle>
-    <Product>SteamAuth</Product>
-    <Copyright>Copyright ©  2015</Copyright>
-    <OutputPath>bin\$(Configuration)\</OutputPath>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugType>full</DebugType>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="System.Text.Json" Version="9.0.0-preview.7.24405.7" />
-  </ItemGroup>
+    <PropertyGroup>
+        <ProjectGuid>{5AD0934E-F6C4-4AE5-83AF-C788313B2A87}</ProjectGuid>
+        <TargetFramework>net8.0</TargetFramework>
+        <AssemblyTitle>SteamAuth</AssemblyTitle>
+        <Product>SteamAuth</Product>
+        <Copyright>Copyright © 2015</Copyright>
+        <OutputPath>bin\$(Configuration)\</OutputPath>
+        <LangVersion>latestmajor</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <DebugType>full</DebugType>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <DebugType>pdbonly</DebugType>
+    </PropertyGroup>
+    <ItemGroup>
+        <PackageReference Include="System.Text.Json" Version="9.0.0-preview.7.24405.7"/>
+    </ItemGroup>
 </Project>
