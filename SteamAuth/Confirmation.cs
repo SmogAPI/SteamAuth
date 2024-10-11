@@ -23,15 +23,15 @@ public class Confirmation
 
     [JsonPropertyName("creator_id")] public ulong Creator { get; set; }
 
-    [JsonPropertyName("headline")] public string Headline { get; set; }
+    [JsonPropertyName("headline")] public string Headline { get; set; } = string.Empty;
 
-    [JsonPropertyName("summary")] public List<string> Summary { get; set; }
+    [JsonPropertyName("summary")] public List<string> Summary { get; set; } = [];
 
-    [JsonPropertyName("accept")] public string Accept { get; set; }
+    [JsonPropertyName("accept")] public string Accept { get; set; } = string.Empty;
 
-    [JsonPropertyName("cancel")] public string Cancel { get; set; }
+    [JsonPropertyName("cancel")] public string Cancel { get; set; } = string.Empty;
 
-    [JsonPropertyName("icon")] public string Icon { get; set; }
+    [JsonPropertyName("icon")] public string Icon { get; set; } = string.Empty;
 
     [JsonIgnore] public EMobileConfirmationType ConfType { get; set; } = EMobileConfirmationType.Invalid;
 
@@ -47,9 +47,9 @@ public class ConfirmationsResponse
 {
     [JsonPropertyName("success")] public bool Success { get; set; }
 
-    [JsonPropertyName("message")] public string Message { get; set; }
+    [JsonPropertyName("message")] public string Message { get; set; } = string.Empty;
 
     [JsonPropertyName("needauth")] public bool NeedAuthentication { get; set; }
 
-    [JsonPropertyName("conf")] public Confirmation[] Confirmations { get; set; }
+    [JsonPropertyName("conf")] public Confirmation[] Confirmations { get; set; } = [];
 }

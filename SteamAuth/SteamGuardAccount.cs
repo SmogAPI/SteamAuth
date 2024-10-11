@@ -18,31 +18,35 @@ public class SteamGuardAccount
     private static readonly byte[] SteamGuardCodeTranslations =
         { 50, 51, 52, 53, 54, 55, 56, 57, 66, 67, 68, 70, 71, 72, 74, 75, 77, 78, 80, 81, 82, 84, 86, 87, 88, 89 };
 
-    [JsonPropertyName("shared_secret")] public string SharedSecret { get; set; }
+    [JsonPropertyName("shared_secret")] public string SharedSecret { get; set; } = string.Empty;
 
-    [JsonPropertyName("serial_number")] public string SerialNumber { get; set; }
+    [JsonPropertyName("serial_number")] public string SerialNumber { get; set; } = string.Empty;
 
-    [JsonPropertyName("revocation_code")] public string RevocationCode { get; set; }
+    [JsonPropertyName("revocation_code")] public string RevocationCode { get; set; } = string.Empty;
 
-    [JsonPropertyName("uri")] public string Uri { get; set; }
+    [JsonPropertyName("uri")] public string Uri { get; set; } = string.Empty;
 
-    [JsonPropertyName("server_time")] public long ServerTime { get; set; }
+    [JsonPropertyName("server_time")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public long ServerTime { get; set; }
 
-    [JsonPropertyName("account_name")] public string AccountName { get; set; }
+    [JsonPropertyName("account_name")] public string AccountName { get; set; } = string.Empty;
 
-    [JsonPropertyName("token_gid")] public string TokenGid { get; set; }
+    [JsonPropertyName("token_gid")] public string TokenGid { get; set; } = string.Empty;
 
-    [JsonPropertyName("identity_secret")] public string IdentitySecret { get; set; }
+    [JsonPropertyName("identity_secret")] public string IdentitySecret { get; set; } = string.Empty;
 
-    [JsonPropertyName("secret_1")] public string Secret1 { get; set; }
+    [JsonPropertyName("secret_1")] public string Secret1 { get; set; } = string.Empty;
 
-    [JsonPropertyName("status")] public int? Status { get; set; }
+    [JsonPropertyName("status")]
+    [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+    public int? Status { get; set; }
 
-    [JsonPropertyName("device_id")] public string DeviceId { get; set; }
+    [JsonPropertyName("device_id")] public string DeviceId { get; set; } = string.Empty;
 
     [JsonPropertyName("fully_enrolled")] public bool FullyEnrolled { get; set; }
 
-    public SessionData Session { get; set; }
+    public SessionData Session { get; set; } = null!;
 
     /// <summary>
     ///     Remove steam guard from this account
@@ -59,24 +63,23 @@ public class SteamGuardAccount
             "https://api.steampowered.com/ITwoFactorService/RemoveAuthenticator/v1?access_token=" + Session.AccessToken,
             null, postBody);
 
-        // Parse to object
-        var removeResponse = JsonSerializer.Deserialize<RemoveAuthenticatorResponse>(response);
+        if (IsNullOrEmpty(response)) return false;
 
-        if (removeResponse == null || removeResponse.Response == null || !removeResponse.Response.Success) return false;
-        return true;
+        var removeResponse = JsonSerializer.Deserialize<RemoveAuthenticatorResponse>(response);
+        return removeResponse is { Response.Success: true };
     }
 
-    public string GenerateSteamGuardCode()
+    public string? GenerateSteamGuardCode()
     {
         return GenerateSteamGuardCodeForTime(TimeAligner.GetSteamTime());
     }
 
-    public async Task<string> GenerateSteamGuardCodeAsync()
+    public async Task<string?> GenerateSteamGuardCodeAsync()
     {
         return GenerateSteamGuardCodeForTime(await TimeAligner.GetSteamTimeAsync());
     }
 
-    public string GenerateSteamGuardCodeForTime(long time)
+    public string? GenerateSteamGuardCodeForTime(long time)
     {
         if (IsNullOrEmpty(SharedSecret)) return "";
 
@@ -133,6 +136,7 @@ public class SteamGuardAccount
     private Confirmation[] FetchConfirmationInternal(string response)
     {
         var confirmationsResponse = JsonSerializer.Deserialize<ConfirmationsResponse>(response);
+        if (confirmationsResponse == null) throw new Exception("Failed to parse response");
 
         if (!confirmationsResponse.Success) throw new Exception(confirmationsResponse.Message);
 
@@ -185,10 +189,8 @@ public class SteamGuardAccount
         url += queryString;
 
         var response = await SteamWeb.GetRequest(url, Session.GetCookies());
-        if (response == null) return false;
-
         var confResponse = JsonSerializer.Deserialize<SendConfirmationResponse>(response);
-        return confResponse.Success;
+        return confResponse is { Success: true };
     }
 
     private async Task<bool> _sendMultiConfirmationAjax(Confirmation[] confs, string op)
@@ -203,7 +205,6 @@ public class SteamGuardAccount
         using (var client = new HttpClient(new HttpClientHandler { CookieContainer = Session.GetCookies() }))
         {
             client.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
-            client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
             var content = new StringContent(query, Encoding.UTF8, "application/x-www-form-urlencoded");
             var result = await client.PostAsync(new Uri(url), content);
             response = await result.Content.ReadAsStringAsync();
@@ -212,12 +213,12 @@ public class SteamGuardAccount
         if (IsNullOrEmpty(response)) return false;
 
         var confResponse = JsonSerializer.Deserialize<SendConfirmationResponse>(response);
-        return confResponse.Success;
+        return confResponse is { Success: true };
     }
 
     public string GenerateConfirmationUrl(string tag = "conf")
     {
-        var endpoint = ApiEndpoints.CommunityBase + "/mobileconf/getlist?";
+        const string endpoint = ApiEndpoints.CommunityBase + "/mobileconf/getlist?";
         var queryString = GenerateConfirmationQueryParams(tag);
         return endpoint + queryString;
     }
@@ -250,7 +251,7 @@ public class SteamGuardAccount
         return ret;
     }
 
-    private string _generateConfirmationHashForTime(long time, string tag)
+    private string? _generateConfirmationHashForTime(long time, string? tag)
     {
         var decode = Convert.FromBase64String(IdentitySecret);
         var n2 = 8;
@@ -300,11 +301,11 @@ public class SteamGuardAccount
 
     private class RemoveAuthenticatorResponse
     {
-        [JsonPropertyName("response")] public RemoveAuthenticatorInternalResponse Response { get; set; }
+        [JsonPropertyName("response")] public RemoveAuthenticatorInternalResponse Response { get; set; } = null!;
 
         internal class RemoveAuthenticatorInternalResponse
         {
-            [JsonPropertyName("success")] public bool Success { get; }
+            [JsonPropertyName("success")] public bool Success { get; } = false;
 
             [JsonPropertyName("revocation_attempts_remaining")]
             public int RevocationAttemptsRemaining { get; set; }
@@ -320,6 +321,6 @@ public class SteamGuardAccount
     {
         [JsonPropertyName("success")] public bool Success { get; set; }
 
-        [JsonPropertyName("html")] public string Html { get; set; }
+        [JsonPropertyName("html")] public string Html { get; set; } = string.Empty;
     }
 }

@@ -13,11 +13,11 @@ public class SessionData
 {
     public ulong SteamId { get; set; }
 
-    public string AccessToken { get; set; }
+    public string AccessToken { get; set; } = string.Empty;
 
-    public string RefreshToken { get; set; }
+    public string RefreshToken { get; set; } = string.Empty;
 
-    public string SessionId { get; set; }
+    public string? SessionId { get; set; }
 
     public async Task RefreshAccessToken()
     {
@@ -27,12 +27,14 @@ public class SessionData
         if (IsTokenExpired(RefreshToken))
             throw new Exception("Refresh token is expired");
 
-        string responseStr;
+        string? responseStr;
         try
         {
-            var postData = new NameValueCollection();
-            postData.Add("refresh_token", RefreshToken);
-            postData.Add("steamid", SteamId.ToString());
+            var postData = new NameValueCollection
+            {
+                { "refresh_token", RefreshToken },
+                { "steamid", SteamId.ToString() }
+            };
             responseStr = await SteamWeb.PostRequest(
                 "https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/", null, postData);
         }
@@ -40,25 +42,24 @@ public class SessionData
         {
             throw new Exception("Failed to refresh token: " + ex.Message);
         }
+        if (responseStr == null)
+            throw new Exception("Failed to refresh token: response is null");
 
         var response = JsonSerializer.Deserialize<GenerateAccessTokenForAppResponse>(responseStr);
+        if (response?.Response == null || string.IsNullOrEmpty(response.Response.AccessToken))
+            throw new Exception("Failed to refresh token: " + responseStr);
+
         AccessToken = response.Response.AccessToken;
     }
 
     public bool IsAccessTokenExpired()
     {
-        if (string.IsNullOrEmpty(AccessToken))
-            return true;
-
-        return IsTokenExpired(AccessToken);
+        return string.IsNullOrEmpty(AccessToken) || IsTokenExpired(AccessToken);
     }
 
     public bool IsRefreshTokenExpired()
     {
-        if (string.IsNullOrEmpty(RefreshToken))
-            return true;
-
-        return IsTokenExpired(RefreshToken);
+        return string.IsNullOrEmpty(RefreshToken) || IsTokenExpired(RefreshToken);
     }
 
     private bool IsTokenExpired(string token)
@@ -71,6 +72,8 @@ public class SessionData
 
         var payloadBytes = Convert.FromBase64String(base64);
         var jwt = JsonSerializer.Deserialize<SteamAccessToken>(Encoding.UTF8.GetString(payloadBytes));
+        if (jwt == null)
+            throw new Exception("Failed to parse JWT");
 
         // Compare expire time of the token to the current time
         return DateTimeOffset.UtcNow.ToUnixTimeSeconds() > jwt.Exp;
@@ -121,11 +124,11 @@ public class SessionData
 
     private class GenerateAccessTokenForAppResponse
     {
-        [JsonPropertyName("response")] public GenerateAccessTokenForAppResponseResponse Response { get; set; }
+        [JsonPropertyName("response")] public GenerateAccessTokenForAppResponseResponse Response { get; set; } = new();
     }
 
     private class GenerateAccessTokenForAppResponseResponse
     {
-        [JsonPropertyName("access_token")] public string AccessToken { get; }
+        [JsonPropertyName("access_token")] public string AccessToken { get; } = string.Empty;
     }
 }

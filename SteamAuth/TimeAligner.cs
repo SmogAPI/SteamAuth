@@ -39,6 +39,8 @@ public class TimeAligner
         {
             var response = client.GetStringAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0").Result;
             var query = JsonSerializer.Deserialize<TimeQuery>(response);
+            if (query == null) return;
+
             _timeDifference = (int)(query.Response.ServerTime - currentTime);
             _aligned = true;
         }
@@ -57,6 +59,8 @@ public class TimeAligner
         {
             var response = await client.GetStringAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0");
             var query = JsonSerializer.Deserialize<TimeQuery>(response);
+            if (query == null) return;
+
             _timeDifference = (int)(query.Response.ServerTime - currentTime);
             _aligned = true;
         }
@@ -67,7 +71,7 @@ public class TimeAligner
 
     internal class TimeQuery
     {
-        [JsonPropertyName("response")] internal TimeQueryResponse Response { get; set; }
+        [JsonPropertyName("response")] internal TimeQueryResponse Response { get; set; } = null!;
 
         internal class TimeQueryResponse
         {

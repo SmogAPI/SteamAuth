@@ -45,26 +45,25 @@ public class AuthenticatorLinker
     /// <summary>
     ///     Email address the confirmation email was sent to when adding a phone number
     /// </summary>
-    public string ConfirmationEmailAddress;
+    public string? ConfirmationEmailAddress;
 
     /// <summary>
     ///     True if the authenticator has been fully finalized.
     /// </summary>
     public bool Finalized = false;
 
-    public string PhoneCountryCode = null;
+    public string? PhoneCountryCode = null;
 
     /// <summary>
     ///     Set to register a new phone number when linking. If a phone number is not set on the account, this must be set. If
     ///     a phone number is set on the account, this must be null.
     /// </summary>
-    public string PhoneNumber = null;
+    public string? PhoneNumber = null;
 
     /// <summary>
     ///     Create a new instance of AuthenticatorLinker
     /// </summary>
-    /// <param name="accessToken">Access token for a Steam account created with k_EAuthTokenPlatformType_MobileApp</param>
-    /// <param name="steamid">64 bit formatted steamid for the account</param>
+    /// <param name="sessionData">SessionData object containing an accessToken and a steamid</param>
     public AuthenticatorLinker(SessionData sessionData)
     {
         _session = sessionData;
@@ -80,7 +79,7 @@ public class AuthenticatorLinker
     ///     After the initial link step, if successful, this will be the SteamGuard data for the account. PLEASE save this
     ///     somewhere after generating it; it's vital data.
     /// </summary>
-    public SteamGuardAccount LinkedAccount { get; private set; }
+    public SteamGuardAccount LinkedAccount { get; private set; } = null!;
 
     /// <summary>
     ///     First step in adding a mobile authenticator to an account
@@ -118,41 +117,37 @@ public class AuthenticatorLinker
         var addAuthenticatorResponse =
             JsonSerializer.Deserialize<AddAuthenticatorResponse>(addAuthenticatorResponseStr);
 
-        if (addAuthenticatorResponse == null || addAuthenticatorResponse.Response == null)
+        if (addAuthenticatorResponse?.Response == null)
             return LinkResult.GeneralFailure;
 
-        // Status 2 means no phone number is on the account
-        if (addAuthenticatorResponse.Response.Status == 2)
+        switch (addAuthenticatorResponse.Response.Status)
         {
-            if (PhoneNumber == null)
-            {
+            // Status 2 means no phone number is on the account
+            case 2 when PhoneNumber == null:
                 return LinkResult.MustProvidePhoneNumber;
-            }
             // Add phone number
-
             // Get country code
-            var countryCode = PhoneCountryCode;
-
-            // If given country code is null, use the one from the Steam account
-            if (string.IsNullOrEmpty(countryCode)) countryCode = await GetUserCountry();
-
-            // Set the phone number
-            var res = await _setAccountPhoneNumber(PhoneNumber, countryCode);
-
-            // Make sure it's successful then respond that we must confirm via email
-            if (res != null && res.Response.ConfirmationEmailAddress != null)
+            case 2:
             {
+                var countryCode = PhoneCountryCode;
+
+                // If given country code is null, use the one from the Steam account
+                if (string.IsNullOrEmpty(countryCode)) countryCode = await GetUserCountry();
+
+                // Set the phone number
+                var res = await _setAccountPhoneNumber(PhoneNumber, countryCode);
+
+                // Make sure it's successful then respond that we must confirm via email
+                if (res?.Response.ConfirmationEmailAddress == null) return LinkResult.FailureAddingPhone;
                 ConfirmationEmailAddress = res.Response.ConfirmationEmailAddress;
                 _confirmationEmailSent = true;
                 return LinkResult.MustConfirmEmail;
+
+                // If something else fails, we end up here
             }
-
-            // If something else fails, we end up here
-            return LinkResult.FailureAddingPhone;
+            case 29:
+                return LinkResult.AuthenticatorPresent;
         }
-
-        if (addAuthenticatorResponse.Response.Status == 29)
-            return LinkResult.AuthenticatorPresent;
 
         if (addAuthenticatorResponse.Response.Status != 1)
             return LinkResult.GeneralFailure;
@@ -183,7 +178,6 @@ public class AuthenticatorLinker
             using (var client = new HttpClient(new HttpClientHandler { CookieContainer = _session.GetCookies() }))
             {
                 client.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
-                client.DefaultRequestHeaders.Add("Content-Type", "application/x-www-form-urlencoded; charset=UTF-8");
                 var content = new FormUrlEncodedContent(finalizeAuthenticatorValues.Cast<string>()
                     .ToDictionary(k => k, k => finalizeAuthenticatorValues[k]));
                 var result =
@@ -197,14 +191,16 @@ public class AuthenticatorLinker
             var finalizeAuthenticatorResponse =
                 JsonSerializer.Deserialize<FinalizeAuthenticatorResponse>(finalizeAuthenticatorResultStr);
 
-            if (finalizeAuthenticatorResponse == null || finalizeAuthenticatorResponse.Response == null)
+            if (finalizeAuthenticatorResponse?.Response == null)
                 return FinalizeResult.GeneralFailure;
 
-            if (finalizeAuthenticatorResponse.Response.Status == 89) return FinalizeResult.BadSmsCode;
-
-            if (finalizeAuthenticatorResponse.Response.Status == 88)
-                if (tries >= 10)
+            switch (finalizeAuthenticatorResponse.Response.Status)
+            {
+                case 89:
+                    return FinalizeResult.BadSmsCode;
+                case 88 when tries >= 10:
                     return FinalizeResult.UnableToGenerateCorrectCodes;
+            }
 
             if (!finalizeAuthenticatorResponse.Response.Success) return FinalizeResult.GeneralFailure;
 
@@ -230,6 +226,8 @@ public class AuthenticatorLinker
 
         // Parse response json to object
         var response = JsonSerializer.Deserialize<GetUserCountryResponse>(getCountryResponseStr);
+        if (response?.Response == null) throw new Exception("Failed to get country");
+
         return response.Response.Country;
     }
 
@@ -243,7 +241,10 @@ public class AuthenticatorLinker
         var getCountryResponseStr = await SteamWeb.PostRequest(
             "https://api.steampowered.com/IPhoneService/SetAccountPhoneNumber/v1?access_token=" + _session.AccessToken,
             null, setPhoneBody);
-        return JsonSerializer.Deserialize<SetAccountPhoneNumberResponse>(getCountryResponseStr);
+
+        var response = JsonSerializer.Deserialize<SetAccountPhoneNumberResponse>(getCountryResponseStr);
+        if (response?.Response == null) throw new Exception("Failed to set phone number");
+        return response;
     }
 
     private async Task<bool> _isAccountWaitingForEmailConfirmation()
@@ -255,6 +256,8 @@ public class AuthenticatorLinker
         // Parse response json to object
         var response =
             JsonSerializer.Deserialize<IsAccountWaitingForEmailConfirmationResponse>(waitingForEmailResponse);
+        if (response?.Response == null) throw new Exception("Failed to check if account is waiting for email");
+
         return response.Response.AwaitingEmailConfirmation;
     }
 
@@ -273,60 +276,66 @@ public class AuthenticatorLinker
 
     private class GetUserCountryResponse
     {
-        [JsonPropertyName("response")] public GetUserCountryResponseResponse Response { get; set; }
+        [JsonPropertyName("response")] public GetUserCountryResponseResponse Response { get; set; } = null!;
     }
 
     private class GetUserCountryResponseResponse
     {
-        [JsonPropertyName("country")] public string Country { get; }
+        [JsonPropertyName("country")] public string Country { get; } = string.Empty;
     }
 
     private class SetAccountPhoneNumberResponse
     {
-        [JsonPropertyName("response")] public SetAccountPhoneNumberResponseResponse Response { get; set; }
+        [JsonPropertyName("response")] public SetAccountPhoneNumberResponseResponse Response { get; set; } = null!;
     }
 
     private class SetAccountPhoneNumberResponseResponse
     {
         [JsonPropertyName("confirmation_email_address")]
-        public string ConfirmationEmailAddress { get; }
+        public string? ConfirmationEmailAddress { get; } = null;
 
         [JsonPropertyName("phone_number_formatted")]
-        public string PhoneNumberFormatted { get; set; }
+        public string? PhoneNumberFormatted { get; set; } = null;
     }
 
     private class IsAccountWaitingForEmailConfirmationResponse
     {
         [JsonPropertyName("response")]
-        public IsAccountWaitingForEmailConfirmationResponseResponse Response { get; set; }
+        public IsAccountWaitingForEmailConfirmationResponseResponse Response { get; set; } = null!;
     }
 
     private class IsAccountWaitingForEmailConfirmationResponseResponse
     {
         [JsonPropertyName("awaiting_email_confirmation")]
-        public bool AwaitingEmailConfirmation { get; }
+        public bool AwaitingEmailConfirmation { get; } = false;
 
-        [JsonPropertyName("seconds_to_wait")] public int SecondsToWait { get; set; }
+        [JsonPropertyName("seconds_to_wait")]
+        [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+        public int SecondsToWait { get; set; }
     }
 
     private class AddAuthenticatorResponse
     {
-        [JsonPropertyName("response")] public SteamGuardAccount Response { get; set; }
+        [JsonPropertyName("response")] public SteamGuardAccount? Response { get; set; }
     }
 
     private class FinalizeAuthenticatorResponse
     {
-        [JsonPropertyName("response")] public FinalizeAuthenticatorInternalResponse Response { get; set; }
+        [JsonPropertyName("response")] public FinalizeAuthenticatorInternalResponse? Response { get; set; }
 
         internal class FinalizeAuthenticatorInternalResponse
         {
-            [JsonPropertyName("success")] public bool Success { get; }
+            [JsonPropertyName("success")] public bool Success { get; } = false;
 
-            [JsonPropertyName("want_more")] public bool WantMore { get; }
+            [JsonPropertyName("want_more")] public bool WantMore { get; } = false;
 
-            [JsonPropertyName("server_time")] public long ServerTime { get; set; }
+            [JsonPropertyName("server_time")]
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+            public long ServerTime { get; set; }
 
-            [JsonPropertyName("status")] public int Status { get; }
+            [JsonPropertyName("status")]
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+            public int? Status { get; } = null;
         }
     }
 }
