@@ -9,23 +9,52 @@ using SteamKit2.Internal;
 
 namespace TestBed;
 
+class TestLogListener : IDebugListener
+{
+    public void WriteLine(string category, string msg)
+    {
+        Console.WriteLine("[DEBUG] {0}: {1}", category, msg);
+    }
+}
+
 internal class Program
 {
     private static async Task Main(string[] args)
     {
-        //This basic loop will log into user accounts you specify, enable the mobile authenticator, and save a maFile (mobile authenticator file)
+        // Enable debug logging
+        DebugLog.Enabled = true;
+        DebugLog.AddListener(new TestLogListener());
+
+        // This basic loop will log into user accounts you specify, enable the mobile authenticator, and save a maFile (mobile authenticator file)
         var result = AuthenticatorLinker.LinkResult.GeneralFailure;
         while (true)
         {
             // Start a new SteamClient instance
-            var steamClient = new SteamClient();
+            var config = SteamConfiguration.Create(b =>
+            {
+                b.WithProtocolTypes(ProtocolTypes.All);
+                b.WithConnectionTimeout(TimeSpan.FromSeconds(60));
+            });
+
+            var steamClient = new SteamClient(config);
 
             // Connect to Steam
             steamClient.Connect();
 
+            var manager = new CallbackManager(steamClient);
+
+            manager.Subscribe<SteamClient.DisconnectedCallback>(_ =>
+            {
+                Console.WriteLine("Disconnected from Steam, reconnecting...");
+                steamClient.Connect();
+            });
+
             // Really basic way to wait until Steam is connected
             while (!steamClient.IsConnected)
+            {
+                await manager.RunWaitCallbackAsync();
                 await Task.Delay(500);
+            }
 
             Console.WriteLine("Enter username: ");
             var username = Console.ReadLine();
