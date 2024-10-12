@@ -305,7 +305,7 @@ public class SteamGuardAccount
 
         internal class RemoveAuthenticatorInternalResponse
         {
-            [JsonPropertyName("success")] public bool Success { get; } = false;
+            [JsonPropertyName("success")] public bool Success { get; set; } = false;
 
             [JsonPropertyName("revocation_attempts_remaining")]
             public int RevocationAttemptsRemaining { get; set; }

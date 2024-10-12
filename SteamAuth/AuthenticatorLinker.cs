@@ -15,7 +15,7 @@ public class AuthenticatorLinker
 {
     public enum FinalizeResult
     {
-        BadSmsCode,
+        BadAuthCode,
         UnableToGenerateCorrectCodes,
         Success,
         GeneralFailure
@@ -160,7 +160,7 @@ public class AuthenticatorLinker
         return LinkResult.AwaitingFinalization;
     }
 
-    public async Task<FinalizeResult> FinalizeAddAuthenticator(string smsCode)
+    public async Task<FinalizeResult> FinalizeAddAuthenticator(string authCode)
     {
         var tries = 0;
         while (tries <= 10)
@@ -170,7 +170,7 @@ public class AuthenticatorLinker
                 { "steamid", _session.SteamId.ToString() },
                 { "authenticator_code", await LinkedAccount.GenerateSteamGuardCodeAsync() },
                 { "authenticator_time", (await TimeAligner.GetSteamTimeAsync()).ToString() },
-                { "activation_code", smsCode },
+                { "activation_code", authCode },
                 { "validate_sms_code", "1" }
             };
 
@@ -197,7 +197,7 @@ public class AuthenticatorLinker
             switch (finalizeAuthenticatorResponse.Response.Status)
             {
                 case 89:
-                    return FinalizeResult.BadSmsCode;
+                    return FinalizeResult.BadAuthCode;
                 case 88 when tries >= 10:
                     return FinalizeResult.UnableToGenerateCorrectCodes;
             }
@@ -281,7 +281,7 @@ public class AuthenticatorLinker
 
     private class GetUserCountryResponseResponse
     {
-        [JsonPropertyName("country")] public string Country { get; } = string.Empty;
+        [JsonPropertyName("country")] public string Country { get; set; } = string.Empty;
     }
 
     private class SetAccountPhoneNumberResponse
@@ -292,7 +292,7 @@ public class AuthenticatorLinker
     private class SetAccountPhoneNumberResponseResponse
     {
         [JsonPropertyName("confirmation_email_address")]
-        public string? ConfirmationEmailAddress { get; } = null;
+        public string? ConfirmationEmailAddress { get; set; } = null;
 
         [JsonPropertyName("phone_number_formatted")]
         public string? PhoneNumberFormatted { get; set; } = null;
@@ -307,7 +307,7 @@ public class AuthenticatorLinker
     private class IsAccountWaitingForEmailConfirmationResponseResponse
     {
         [JsonPropertyName("awaiting_email_confirmation")]
-        public bool AwaitingEmailConfirmation { get; } = false;
+        public bool AwaitingEmailConfirmation { get; set; } = false;
 
         [JsonPropertyName("seconds_to_wait")]
         [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
@@ -325,9 +325,9 @@ public class AuthenticatorLinker
 
         internal class FinalizeAuthenticatorInternalResponse
         {
-            [JsonPropertyName("success")] public bool Success { get; } = false;
+            [JsonPropertyName("success")] public bool Success { get; set; } = false;
 
-            [JsonPropertyName("want_more")] public bool WantMore { get; } = false;
+            [JsonPropertyName("want_more")] public bool WantMore { get; set; } = false;
 
             [JsonPropertyName("server_time")]
             [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
@@ -335,7 +335,7 @@ public class AuthenticatorLinker
 
             [JsonPropertyName("status")]
             [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
-            public int? Status { get; } = null;
+            public int? Status { get; set; } = null;
         }
     }
 }

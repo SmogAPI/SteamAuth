@@ -161,9 +161,9 @@ internal class Program
             {
                 tries++;
 
-                Console.WriteLine("Please enter SMS code: ");
-                var smsCode = Console.ReadLine();
-                var linkResult = await linker.FinalizeAddAuthenticator(smsCode);
+                Console.WriteLine("Please enter authorization code (SMS or Email): ");
+                var authCode = Console.ReadLine();
+                var linkResult = await linker.FinalizeAddAuthenticator(authCode);
 
                 if (linkResult != AuthenticatorLinker.FinalizeResult.Success)
                 {
