@@ -19,7 +19,7 @@
         <AssemblyName>SmogAuthCore</AssemblyName>
         <RootNamespace>SmogAuthCore</RootNamespace>
         <Nullable>enable</Nullable>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <DebugType>full</DebugType>

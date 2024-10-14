@@ -59,7 +59,7 @@ public class SteamGuardAccount
         postBody.Add("revocation_code", RevocationCode);
         postBody.Add("revocation_reason", "1");
         postBody.Add("steamguard_scheme", scheme.ToString());
-        var response = await SteamWeb.PostRequest(
+        var response = await SteamWeb.PostAsync(
             "https://api.steampowered.com/ITwoFactorService/RemoveAuthenticator/v1?access_token=" + Session.AccessToken,
             null, postBody);
 
@@ -122,14 +122,14 @@ public class SteamGuardAccount
     public Confirmation[] FetchConfirmations()
     {
         var url = GenerateConfirmationUrl();
-        var response = SteamWeb.GetRequest(url, Session.GetCookies()).Result;
+        var response = SteamWeb.GetAsync(url, Session.GetCookies()).Result;
         return FetchConfirmationInternal(response);
     }
 
     public async Task<Confirmation[]> FetchConfirmationsAsync()
     {
         var url = GenerateConfirmationUrl();
-        var response = await SteamWeb.GetRequest(url, Session.GetCookies());
+        var response = await SteamWeb.GetAsync(url, Session.GetCookies());
         return FetchConfirmationInternal(response);
     }
 
@@ -188,7 +188,7 @@ public class SteamGuardAccount
         queryString += "&cid=" + conf.Id + "&ck=" + conf.Key;
         url += queryString;
 
-        var response = await SteamWeb.GetRequest(url, Session.GetCookies());
+        var response = await SteamWeb.GetAsync(url, Session.GetCookies());
         var confResponse = JsonSerializer.Deserialize<SendConfirmationResponse>(response);
         return confResponse is { Success: true };
     }

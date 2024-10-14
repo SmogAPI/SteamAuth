@@ -11,27 +11,54 @@ public static class SteamWeb
 {
     public const string MobileAppUserAgent = "Dalvik/2.1.0 (Linux; U; Android 9; Valve Steam App Version/3)";
 
-    public static async Task<string> GetRequest(string url, CookieContainer? cookies)
+    private static readonly HttpClient HttpClient = new();
+
+    static SteamWeb()
     {
-        using var handler = new HttpClientHandler();
-        if (cookies != null) handler.CookieContainer = cookies;
-        using var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
-        var response = await client.GetStringAsync(url);
-        return response;
+        HttpClient.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
     }
 
-    public static async Task<string> PostRequest(string url, CookieContainer? cookies, NameValueCollection? body)
+    public static async Task<string> GetAsync(string url, CookieContainer? cookies)
+    {
+        var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+
+        if (cookies != null)
+        {
+            var cookieHeader = GetCookieHeader(url, cookies);
+            if (!string.IsNullOrEmpty(cookieHeader))
+            {
+                requestMessage.Headers.Add("Cookie", cookieHeader);
+            }
+        }
+
+        var response = await HttpClient.SendAsync(requestMessage);
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    public static async Task<string> PostAsync(string url, CookieContainer? cookies, NameValueCollection? body)
     {
         body ??= new NameValueCollection();
+        var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+        {
+            Content = new FormUrlEncodedContent(body.Cast<string>().ToDictionary(k => k, k => body[k]))
+        };
 
-        using var handler = new HttpClientHandler();
-        if (cookies != null) handler.CookieContainer = cookies;
-        using var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(MobileAppUserAgent);
-        var content = new FormUrlEncodedContent(body.Cast<string>().ToDictionary(k => k, k => body[k]));
-        var result = await client.PostAsync(new Uri(url), content);
-        var response = await result.Content.ReadAsStringAsync();
-        return response;
+        if (cookies != null)
+        {
+            var cookieHeader = GetCookieHeader(url, cookies);
+            if (!string.IsNullOrEmpty(cookieHeader))
+            {
+                requestMessage.Headers.Add("Cookie", cookieHeader);
+            }
+        }
+
+        var response = await HttpClient.SendAsync(requestMessage);
+        return await response.Content.ReadAsStringAsync();
+    }
+
+    private static string GetCookieHeader(string url, CookieContainer cookies)
+    {
+        var uri = new Uri(url);
+        return cookies.GetCookieHeader(uri);
     }
 }

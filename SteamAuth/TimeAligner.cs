@@ -12,7 +12,7 @@ namespace SmogAuthCore;
 ///     Necessary to generate up-to-date codes. In general, this will have an error of less than a second, assuming Steam
 ///     is operational.
 /// </summary>
-public class TimeAligner
+public static class TimeAligner
 {
     private static bool _aligned;
     private static int _timeDifference;
@@ -29,53 +29,39 @@ public class TimeAligner
         return DateTimeOffset.UtcNow.ToUnixTimeSeconds() + _timeDifference;
     }
 
-    public static void AlignTime()
+    private static void AlignTime()
     {
         var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        using var handler = new HttpClientHandler();
-        using var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
-        try
-        {
-            var response = client.GetStringAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0").Result;
-            var query = JsonSerializer.Deserialize<TimeQuery>(response);
-            if (query == null) return;
 
-            _timeDifference = (int)(query.Response.ServerTime - currentTime);
-            _aligned = true;
-        }
-        catch (AggregateException)
-        {
-        }
+        var content = SteamWeb.PostAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0", null, null).Result;
+        var query = JsonSerializer.Deserialize<TimeQuery>(content);
+        if (query?.Response == null) return;
+
+        _timeDifference = (int)(query.Response.ServerTime - currentTime);
+        _aligned = true;
     }
 
-    public static async Task AlignTimeAsync()
+    private static async Task AlignTimeAsync()
     {
         var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
-        using var handler = new HttpClientHandler();
-        using var client = new HttpClient(handler);
-        client.DefaultRequestHeaders.UserAgent.ParseAdd(SteamWeb.MobileAppUserAgent);
-        try
-        {
-            var response = await client.GetStringAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0");
-            var query = JsonSerializer.Deserialize<TimeQuery>(response);
-            if (query == null) return;
 
-            _timeDifference = (int)(query.Response.ServerTime - currentTime);
-            _aligned = true;
-        }
-        catch (HttpRequestException)
-        {
-        }
+        var content = await SteamWeb.PostAsync(ApiEndpoints.TwoFactorTimeQuery + "?steamid=0", null, null);
+        var query = JsonSerializer.Deserialize<TimeQuery>(content);
+        if (query?.Response == null) return;
+
+        _timeDifference = (int)(query.Response.ServerTime - currentTime);
+        _aligned = true;
     }
 
     internal class TimeQuery
     {
-        [JsonPropertyName("response")] internal TimeQueryResponse Response { get; set; } = null!;
+        [JsonPropertyName("response")] public TimeQueryResponse? Response { get; set; }
 
         internal class TimeQueryResponse
         {
-            [JsonPropertyName("server_time")] public long ServerTime { get; set; }
+            [JsonPropertyName("server_time")]
+            [JsonNumberHandling(JsonNumberHandling.AllowReadingFromString)]
+            public long ServerTime { get; set; }
         }
     }
 }

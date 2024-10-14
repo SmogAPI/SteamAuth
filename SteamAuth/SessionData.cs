@@ -35,7 +35,7 @@ public class SessionData
                 { "refresh_token", RefreshToken },
                 { "steamid", SteamId.ToString() }
             };
-            responseStr = await SteamWeb.PostRequest(
+            responseStr = await SteamWeb.PostAsync(
                 "https://api.steampowered.com/IAuthenticationService/GenerateAccessTokenForApp/v1/", null, postData);
         }
         catch (Exception ex)

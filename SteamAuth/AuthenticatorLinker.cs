@@ -109,7 +109,7 @@ public class AuthenticatorLinker
             { "device_identifier", DeviceId },
             { "sms_phone_id", "1" }
         };
-        var addAuthenticatorResponseStr = await SteamWeb.PostRequest(
+        var addAuthenticatorResponseStr = await SteamWeb.PostAsync(
             "https://api.steampowered.com/ITwoFactorService/AddAuthenticator/v1/?access_token=" + _session.AccessToken,
             null, addAuthenticatorBody);
 
@@ -220,7 +220,7 @@ public class AuthenticatorLinker
     private async Task<string> GetUserCountry()
     {
         var getCountryBody = new NameValueCollection { { "steamid", _session.SteamId.ToString() } };
-        var getCountryResponseStr = await SteamWeb.PostRequest(
+        var getCountryResponseStr = await SteamWeb.PostAsync(
             "https://api.steampowered.com/IUserAccountService/GetUserCountry/v1?access_token=" + _session.AccessToken,
             null, getCountryBody);
 
@@ -238,7 +238,7 @@ public class AuthenticatorLinker
             { "phone_number", phoneNumber },
             { "phone_country_code", countryCode }
         };
-        var getCountryResponseStr = await SteamWeb.PostRequest(
+        var getCountryResponseStr = await SteamWeb.PostAsync(
             "https://api.steampowered.com/IPhoneService/SetAccountPhoneNumber/v1?access_token=" + _session.AccessToken,
             null, setPhoneBody);
 
@@ -249,7 +249,7 @@ public class AuthenticatorLinker
 
     private async Task<bool> _isAccountWaitingForEmailConfirmation()
     {
-        var waitingForEmailResponse = await SteamWeb.PostRequest(
+        var waitingForEmailResponse = await SteamWeb.PostAsync(
             "https://api.steampowered.com/IPhoneService/IsAccountWaitingForEmailConfirmation/v1?access_token=" +
             _session.AccessToken, null, null);
 
@@ -263,7 +263,7 @@ public class AuthenticatorLinker
 
     private async Task<bool> _sendPhoneVerificationCode()
     {
-        await SteamWeb.PostRequest(
+        await SteamWeb.PostAsync(
             "https://api.steampowered.com/IPhoneService/SendPhoneVerificationCode/v1?access_token=" +
             _session.AccessToken, null, null);
         return true;
